@@ -243,14 +243,48 @@ def require_yes(args: argparse.Namespace, message: str) -> None:
         raise W2RError(message + " Add --yes to confirm.")
 
 
-def cmd_init(args: argparse.Namespace) -> None:
-    cfg = {
-        "base_url": normalize_base_url(args.base_url),
-        "token": args.token,
-        "proxy_secret": args.proxy_secret or "",
+def _read_stdin_secret(label: str) -> str:
+    value = sys.stdin.readline().rstrip("\r\n")
+    if not value:
+        raise W2RError(f"{label} is empty from stdin")
+    return value
+
+
+def resolve_init_config(args: argparse.Namespace) -> Dict[str, Any]:
+    if args.token and args.token_stdin:
+        raise W2RError("--token and --token-stdin cannot be used together")
+
+    base_url = args.base_url or ""
+    token = args.token or ""
+    proxy_secret = args.proxy_secret or ""
+
+    if args.from_env:
+        if not base_url:
+            base_url = os.environ.get("W2R_BASE_URL", "")
+        if not token and not args.token_stdin:
+            token = os.environ.get("W2R_TOKEN", "")
+        if not proxy_secret:
+            proxy_secret = os.environ.get("W2R_PROXY_SECRET", "")
+
+    if args.token_stdin:
+        token = _read_stdin_secret("token")
+
+    if not base_url:
+        raise W2RError("base_url is required. Set --base-url or W2R_BASE_URL with --from-env.")
+    if not token:
+        raise W2RError("token is required. Use --token, --token-stdin, or W2R_TOKEN with --from-env.")
+
+    return {
+        "base_url": normalize_base_url(base_url),
+        "token": token,
+        "proxy_secret": proxy_secret,
         "timeout": args.timeout,
         "hmac_algo": args.hmac_algo,
     }
+
+
+def cmd_init(args: argparse.Namespace) -> None:
+    cfg = resolve_init_config(args)
     save_config(Path(args.config), cfg)
     print(f"Config saved: {args.config}")
 
@@ -333,6 +367,8 @@ def cmd_articles_query(client: W2RClient, args: argparse.Namespace) -> None:
 
 def cmd_config_get(client: W2RClient, args: argparse.Namespace) -> None:
     obj = client.get_json("/config")
+    if args.show_secrets and os.environ.get("W2R_ALLOW_SHOW_SECRETS") != "1":
+        raise W2RError("Refusing to show secrets. Set W2R_ALLOW_SHOW_SECRETS=1 and retry with --show-secrets.")
     print_json(obj if args.show_secrets else redact_secrets(obj))
 
 
@@ -379,8 +415,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     p_init = sub.add_parser("init", help="create config file")
-    p_init.add_argument("--base-url", required=True, help="Wechat2RSS base URL, e.g. https://rss.example.com")
-    p_init.add_argument("--token", required=True, help="RSS_TOKEN")
+    p_init.add_argument("--base-url", default=None, help="Wechat2RSS base URL, e.g. https://rss.example.com")
+    p_init.add_argument("--token", default=None, help="RSS_TOKEN (avoid shell history leakage; prefer --token-stdin)")
+    p_init.add_argument("--token-stdin", action="store_true", help="read RSS_TOKEN from stdin")
+    p_init.add_argument("--from-env", action="store_true", help="read missing fields from W2R_BASE_URL/W2R_TOKEN/W2R_PROXY_SECRET")
     p_init.add_argument("--proxy-secret", default="", help="RSS_PROXY_SECRET, needed for proxy URL generation")
     p_init.add_argument("--timeout", type=int, default=20)
     p_init.add_argument("--hmac-algo", default="sha256", help="HMAC algorithm for proxy signing, default: sha256")
@@ -443,7 +481,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_cfg_get.add_argument(
         "--show-secrets",
         action="store_true",
-        help="show sensitive values (default: redacted)",
+        help="show sensitive values (requires W2R_ALLOW_SHOW_SECRETS=1; default: redacted)",
     )
     p_cfg_get.set_defaults(func=cmd_config_get)
 

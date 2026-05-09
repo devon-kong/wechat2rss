@@ -50,11 +50,28 @@ npm install -g w2r-cli
 
 ### 初始化
 
+推荐方式 1（环境变量）：
+
 ```bash
-w2r init \
+export W2R_BASE_URL="https://rss.example.com"
+export W2R_TOKEN="your-rss-token"
+export W2R_PROXY_SECRET="your-proxy-secret"
+w2r init --from-env
+```
+
+推荐方式 2（stdin，避免命令行明文 token）：
+
+```bash
+printf '%s\n' "your-rss-token" | w2r init \
   --base-url "https://rss.example.com" \
-  --token "your-rss-token" \
+  --token-stdin \
   --proxy-secret "your-proxy-secret"
+```
+
+兼容方式（不推荐，token 会进入 shell history）：
+
+```bash
+w2r init --base-url "https://rss.example.com" --token "your-rss-token"
 ```
 
 ### 常用命令
@@ -72,6 +89,7 @@ w2r proxy img "https://example.com/test.jpg"
 
 - 不要提交任何真实 token 或 secret。
 - `w2r config get` 默认脱敏；如确需明文，必须显式加 `--show-secrets`。
+- `w2r config get --show-secrets` 需要额外设置 `W2R_ALLOW_SHOW_SECRETS=1` 才会生效。
 - 删除订阅必须加 `--yes`，避免误删。
 - 不建议把真实 token 放在命令历史里，优先使用配置文件或安全注入方式。
 
