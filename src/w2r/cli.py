@@ -18,7 +18,6 @@ Example:
 from __future__ import annotations
 
 import argparse
-import base64
 import hashlib
 import hmac
 import json
@@ -28,7 +27,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 DEFAULT_CONFIG = Path.home() / ".config" / "w2r" / "config.json"
 SENSITIVE_FIELD_NAMES = {
@@ -57,12 +56,17 @@ def load_config(path: Path) -> Dict[str, Any]:
                 cfg = json.load(f)
         except json.JSONDecodeError as exc:
             raise W2RError(f"Invalid config JSON: {path}: {exc}") from exc
+        if not isinstance(cfg, dict):
+            raise W2RError(f"Invalid config JSON: {path}: root must be an object")
 
     # Environment variables override file config, useful for CI/Agent runtime.
     cfg["base_url"] = os.environ.get("W2R_BASE_URL", cfg.get("base_url", ""))
     cfg["token"] = os.environ.get("W2R_TOKEN", cfg.get("token", ""))
     cfg["proxy_secret"] = os.environ.get("W2R_PROXY_SECRET", cfg.get("proxy_secret", ""))
-    cfg["timeout"] = int(os.environ.get("W2R_TIMEOUT", cfg.get("timeout", 20)))
+    try:
+        cfg["timeout"] = int(os.environ.get("W2R_TIMEOUT", cfg.get("timeout", 20)))
+    except (TypeError, ValueError) as exc:
+        raise W2RError("Invalid W2R_TIMEOUT: must be an integer") from exc
     cfg["hmac_algo"] = os.environ.get("W2R_HMAC_ALGO", cfg.get("hmac_algo", "sha256"))
 
     if not cfg.get("base_url"):
@@ -175,17 +179,17 @@ def write_or_print(raw: bytes, output: Optional[str], content_type: str = "") ->
         sys.stdout.write(raw.decode("utf-8", errors="replace"))
 
 
-def redact_url_query_value(url: str, key: str, mask: str = "***REDACTED***") -> str:
+def redact_url_query_value(url: str, key: str, mask: str = "***REDACTED***", safe: str = "") -> str:
     parsed = urllib.parse.urlsplit(url)
     query = dict(urllib.parse.parse_qsl(parsed.query, keep_blank_values=True))
     if key in query:
         query[key] = mask
-    new_query = urllib.parse.urlencode(query)
+    new_query = urllib.parse.urlencode(query, safe=safe)
     return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path, new_query, parsed.fragment))
 
 
 def redact_url_token(url: str) -> str:
-    return redact_url_query_value(url, "k")
+    return redact_url_query_value(url, "k", safe="*")
 
 
 def table(rows: List[Dict[str, Any]], columns: List[Tuple[str, str]]) -> None:

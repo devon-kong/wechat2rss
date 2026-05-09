@@ -48,7 +48,7 @@ def test_redact_secrets_nested() -> None:
     payload = {
         "data": {
             "settings": {
-                "RSS_TOKEN": "real-token",
+                "RSS_TOKEN": "example-token",
                 "RSS_PROXY_SECRET": "real-secret",
                 "RSS_HOST": "127.0.0.1:8080",
             }
@@ -86,6 +86,14 @@ def test_load_config_env_override(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 def test_load_config_missing_file(tmp_path: Path) -> None:
     with pytest.raises(W2RError, match="base_url is missing"):
         load_config(tmp_path / "not-found.json")
+
+
+def test_load_config_invalid_timeout(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    cfg_path = tmp_path / "config.json"
+    cfg_path.write_text(json.dumps({"base_url": "https://rss.example.com", "token": "x"}), encoding="utf-8")
+    monkeypatch.setenv("W2R_TIMEOUT", "bad-timeout")
+    with pytest.raises(W2RError, match="Invalid W2R_TIMEOUT"):
+        load_config(cfg_path)
 
 
 def test_save_config_sets_private_mode(tmp_path: Path) -> None:
@@ -212,7 +220,7 @@ def test_feed_all_print_url_contains_auth(capsys: pytest.CaptureFixture[str]) ->
     cmd_feed_all(client, args)
     out = capsys.readouterr().out.strip()
     assert out.startswith("https://rss.example.com/feed/all.xml?")
-    assert "k=%2A%2A%2AREDACTED%2A%2A%2A" in out
+    assert "k=***REDACTED***" in out
     assert "k=abc" not in out
 
 

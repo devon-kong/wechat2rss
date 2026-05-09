@@ -31,7 +31,10 @@ jobs:
         run: pytest
 
       - name: Compile check
-        run: python -m py_compile src/w2r/cli.py
+        run: python -m py_compile w2r.py src/w2r/cli.py
+
+      - name: Build artifacts
+        run: python -m build
 
       - name: CLI smoke
         run: |
