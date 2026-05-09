@@ -41,7 +41,7 @@ brew install w2r
 ### 3) npm（Node 包装器）
 
 ```bash
-npm install -g @your-scope/w2r
+npm install -g w2r-cli
 ```
 
 说明：npm 包内部会调用本机 `python3` 执行 `w2r`，所以仍需 Python 3.10+。

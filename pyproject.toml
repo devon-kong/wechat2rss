@@ -26,9 +26,9 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/YOUR_GITHUB_USERNAME/wechat2rss-cli"
-Repository = "https://github.com/YOUR_GITHUB_USERNAME/wechat2rss-cli"
-Issues = "https://github.com/YOUR_GITHUB_USERNAME/wechat2rss-cli/issues"
+Homepage = "https://github.com/devon-kong/wechat2rss"
+Repository = "https://github.com/devon-kong/wechat2rss"
+Issues = "https://github.com/devon-kong/wechat2rss/issues"
 
 [project.scripts]
 w2r = "w2r.cli:main"

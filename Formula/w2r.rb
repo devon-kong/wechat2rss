@@ -2,8 +2,8 @@ class W2r < Formula
   include Language::Python::Virtualenv
 
   desc "CLI for managing a self-hosted Wechat2RSS service"
-  homepage "https://github.com/YOUR_GITHUB_USERNAME/wechat2rss-cli"
-  url "https://github.com/YOUR_GITHUB_USERNAME/wechat2rss-cli/archive/refs/tags/v0.1.0.tar.gz"
+  homepage "https://github.com/devon-kong/wechat2rss"
+  url "https://github.com/devon-kong/wechat2rss/archive/refs/tags/v0.1.0.tar.gz"
   sha256 "REPLACE_WITH_RELEASE_TARBALL_SHA256"
   license "MIT"
 
