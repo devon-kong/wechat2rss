@@ -36,12 +36,13 @@ brew tap your-org/your-tap
 brew install w2r
 ```
 
-说明：`Formula/w2r.rb` 里 `url` 和 `sha256` 需要在发布新版本后更新为真实 release 产物。
+说明：发布 GitHub release 并更新 `Formula/w2r.rb` 的 `sha256` 后可用。
 
 ### 3) npm（Node 包装器）
 
 ```bash
-# 暂未发布到 npm registry
+# 发布 npm 后可用：
+# npm install -g w2r-cli
 ```
 
 说明：npm 包模板已在仓库中，但当前版本尚未发布到 npm registry。
@@ -90,6 +91,7 @@ w2r proxy img "https://example.com/test.jpg"
 - 不要提交任何真实 token 或 secret。
 - `w2r config get` 默认脱敏；如确需明文，必须显式加 `--show-secrets`。
 - `w2r config get --show-secrets` 需要额外设置 `W2R_ALLOW_SHOW_SECRETS=1` 才会生效。
+- `w2r feed all --print-url` 默认会脱敏 `k` 参数；仅在明确需要时用 `--show-token-url`。
 - 删除订阅必须加 `--yes`，避免误删。
 - 不建议把真实 token 放在命令历史里，优先使用配置文件或安全注入方式。
 
@@ -101,7 +103,7 @@ source .venv/bin/activate
 python -m pip install -U pip
 python -m pip install -e .[dev]
 pytest
-python -m py_compile src/w2r/cli.py
+python -m py_compile w2r.py src/w2r/cli.py
 ```
 
 ## 版本管理

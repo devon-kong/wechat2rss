@@ -8,10 +8,15 @@ Manage a self-hosted Wechat2RSS service safely through the `w2r` CLI.
 - You need feed or proxy URL generation.
 
 ## Safety rules
+- Only call the `w2r` CLI for operations.
+- Do not call Wechat2RSS API directly with `curl`/raw HTTP.
+- Do not read or print `~/.config/w2r/config.json` content.
 - Never print real `W2R_TOKEN` or `W2R_PROXY_SECRET`.
 - Prefer `w2r init --from-env` or `--token-stdin`; avoid token in shell history.
-- Keep `w2r config get` redacted by default; only use `--show-secrets` with explicit approval and `W2R_ALLOW_SHOW_SECRETS=1`.
+- Keep `w2r config get` redacted by default; do not use `--show-secrets` in agent execution.
 - Avoid destructive commands by default (`subs delete` must require `--yes`).
+- Default article query to `w2r articles query --content 0`.
+- Before deleting a subscription, run list/search first and get explicit confirmation.
 - Do not run server-side Docker/DB/data-directory operations from this skill.
 
 ## Typical workflow

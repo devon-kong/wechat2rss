@@ -50,16 +50,13 @@ def eprint(*args: Any) -> None:
 
 
 def load_config(path: Path) -> Dict[str, Any]:
-    if not path.exists():
-        raise W2RError(
-            f"Config not found: {path}\n"
-            "Run: w2r init --base-url https://your-domain --token YOUR_RSS_TOKEN"
-        )
-    try:
-        with path.open("r", encoding="utf-8") as f:
-            cfg = json.load(f)
-    except json.JSONDecodeError as exc:
-        raise W2RError(f"Invalid config JSON: {path}: {exc}") from exc
+    cfg: Dict[str, Any] = {}
+    if path.exists():
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except json.JSONDecodeError as exc:
+            raise W2RError(f"Invalid config JSON: {path}: {exc}") from exc
 
     # Environment variables override file config, useful for CI/Agent runtime.
     cfg["base_url"] = os.environ.get("W2R_BASE_URL", cfg.get("base_url", ""))
@@ -67,6 +64,17 @@ def load_config(path: Path) -> Dict[str, Any]:
     cfg["proxy_secret"] = os.environ.get("W2R_PROXY_SECRET", cfg.get("proxy_secret", ""))
     cfg["timeout"] = int(os.environ.get("W2R_TIMEOUT", cfg.get("timeout", 20)))
     cfg["hmac_algo"] = os.environ.get("W2R_HMAC_ALGO", cfg.get("hmac_algo", "sha256"))
+
+    if not cfg.get("base_url"):
+        raise W2RError(
+            "base_url is missing. Set W2R_BASE_URL or run: "
+            "w2r init --base-url https://your-domain --token YOUR_RSS_TOKEN"
+        )
+    if not cfg.get("token"):
+        raise W2RError(
+            "token is missing. Set W2R_TOKEN or run: "
+            "w2r init --base-url https://your-domain --token YOUR_RSS_TOKEN"
+        )
     return cfg
 
 
@@ -165,6 +173,15 @@ def write_or_print(raw: bytes, output: Optional[str], content_type: str = "") ->
         sys.stdout.buffer.write(raw)
     else:
         sys.stdout.write(raw.decode("utf-8", errors="replace"))
+
+
+def redact_url_query_value(url: str, key: str, mask: str = "***REDACTED***") -> str:
+    parsed = urllib.parse.urlsplit(url)
+    query = dict(urllib.parse.parse_qsl(parsed.query, keep_blank_values=True))
+    if key in query:
+        query[key] = mask
+    new_query = urllib.parse.urlencode(query)
+    return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path, new_query, parsed.fragment))
 
 
 def table(rows: List[Dict[str, Any]], columns: List[Tuple[str, str]]) -> None:
@@ -393,7 +410,7 @@ def cmd_feed_all(client: W2RClient, args: argparse.Namespace) -> None:
     path = f"/feed/all.{suffix}"
     url = client.build(path, auth=True)
     if args.print_url:
-        print(url)
+        print(url if args.show_token_url else redact_url_query_value(url, "k"))
         return
     raw, content_type = client.get(path, auth=True)
     write_or_print(raw, args.output, content_type)
@@ -503,6 +520,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_feed_all = feed_sub.add_parser("all", help="fetch or print all-in-one feed")
     p_feed_all.add_argument("--format", choices=["xml", "json"], default="xml")
     p_feed_all.add_argument("--print-url", action="store_true")
+    p_feed_all.add_argument(
+        "--show-token-url",
+        action="store_true",
+        help="print raw URL with token when used with --print-url",
+    )
     p_feed_all.add_argument("--output", "-o", default=None)
     p_feed_all.set_defaults(func=cmd_feed_all)
 

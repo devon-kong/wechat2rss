@@ -84,7 +84,7 @@ def test_load_config_env_override(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
 
 def test_load_config_missing_file(tmp_path: Path) -> None:
-    with pytest.raises(W2RError, match="Config not found"):
+    with pytest.raises(W2RError, match="base_url is missing"):
         load_config(tmp_path / "not-found.json")
 
 
@@ -129,6 +129,28 @@ def test_config_get_show_secrets_needs_env() -> None:
     args = parser.parse_args(["config", "get", "--show-secrets"])
     with pytest.raises(W2RError):
         cmd_config_get(DummyClient(), args)
+
+
+def test_config_get_show_secrets_allowed_with_env(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    class DummyClient:
+        def get_json(self, path: str):
+            return {"data": {"settings": {"RSS_TOKEN": "x"}}, "err": ""}
+
+    parser = build_parser()
+    args = parser.parse_args(["config", "get", "--show-secrets"])
+    monkeypatch.setenv("W2R_ALLOW_SHOW_SECRETS", "1")
+    cmd_config_get(DummyClient(), args)
+    out = capsys.readouterr().out
+    assert '"RSS_TOKEN": "x"' in out
+
+
+def test_load_config_env_only_when_file_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    cfg_path = tmp_path / "not-found.json"
+    monkeypatch.setenv("W2R_BASE_URL", "https://rss.example.com")
+    monkeypatch.setenv("W2R_TOKEN", "env-token")
+    loaded = load_config(cfg_path)
+    assert loaded["base_url"] == "https://rss.example.com"
+    assert loaded["token"] == "env-token"
 
 
 def test_proxy_key_deterministic_and_hex() -> None:
@@ -178,6 +200,25 @@ def test_proxy_key_invalid_algo() -> None:
 def test_feed_all_print_url_contains_auth(capsys: pytest.CaptureFixture[str]) -> None:
     parser = build_parser()
     args = parser.parse_args(["feed", "all", "--format", "xml", "--print-url"])
+    client = W2RClient(
+        {
+            "base_url": "https://rss.example.com",
+            "token": "abc",
+            "proxy_secret": "",
+            "hmac_algo": "sha256",
+            "timeout": 20,
+        }
+    )
+    cmd_feed_all(client, args)
+    out = capsys.readouterr().out.strip()
+    assert out.startswith("https://rss.example.com/feed/all.xml?")
+    assert "k=%2A%2A%2AREDACTED%2A%2A%2A" in out
+    assert "k=abc" not in out
+
+
+def test_feed_all_print_url_show_token_url(capsys: pytest.CaptureFixture[str]) -> None:
+    parser = build_parser()
+    args = parser.parse_args(["feed", "all", "--format", "xml", "--print-url", "--show-token-url"])
     client = W2RClient(
         {
             "base_url": "https://rss.example.com",
