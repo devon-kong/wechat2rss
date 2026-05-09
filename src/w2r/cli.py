@@ -184,6 +184,10 @@ def redact_url_query_value(url: str, key: str, mask: str = "***REDACTED***") -> 
     return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path, new_query, parsed.fragment))
 
 
+def redact_url_token(url: str) -> str:
+    return redact_url_query_value(url, "k")
+
+
 def table(rows: List[Dict[str, Any]], columns: List[Tuple[str, str]]) -> None:
     if not rows:
         print("(empty)")
@@ -410,7 +414,7 @@ def cmd_feed_all(client: W2RClient, args: argparse.Namespace) -> None:
     path = f"/feed/all.{suffix}"
     url = client.build(path, auth=True)
     if args.print_url:
-        print(url if args.show_token_url else redact_url_query_value(url, "k"))
+        print(url if args.show_token_url else redact_url_token(url))
         return
     raw, content_type = client.get(path, auth=True)
     write_or_print(raw, args.output, content_type)

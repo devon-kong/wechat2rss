@@ -25,6 +25,12 @@ pipx install git+https://github.com/devon-kong/wechat2rss.git
 python3 -m pip install git+https://github.com/devon-kong/wechat2rss.git
 ```
 
+发布后可用（当前未发布到 PyPI）：
+
+```bash
+# pipx install w2r-cli
+```
+
 ### 2) Homebrew（通过 tap）
 
 本仓库提供 formula 模板: `Formula/w2r.rb`。
@@ -33,7 +39,7 @@ python3 -m pip install git+https://github.com/devon-kong/wechat2rss.git
 
 ```bash
 brew tap your-org/your-tap
-brew install w2r
+# brew install w2r  # 发布 release 并更新 sha256 后可用
 ```
 
 说明：发布 GitHub release 并更新 `Formula/w2r.rb` 的 `sha256` 后可用。
@@ -82,7 +88,7 @@ w2r service version
 w2r accounts list
 w2r subs list --page 1 --size 10
 w2r articles query --after 20260501 --content 0
-w2r feed all --format xml --print-url
+w2r feed all --format xml --print-url  # 默认输出脱敏 URL
 w2r proxy img "https://example.com/test.jpg"
 ```
 
