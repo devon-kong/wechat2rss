@@ -20,9 +20,9 @@
 ### 1) pip/pipx（推荐）
 
 ```bash
-pipx install w2r-cli
+pipx install git+https://github.com/devon-kong/wechat2rss.git
 # 或
-python3 -m pip install w2r-cli
+python3 -m pip install git+https://github.com/devon-kong/wechat2rss.git
 ```
 
 ### 2) Homebrew（通过 tap）
@@ -41,10 +41,10 @@ brew install w2r
 ### 3) npm（Node 包装器）
 
 ```bash
-npm install -g w2r-cli
+# 暂未发布到 npm registry
 ```
 
-说明：npm 包内部会调用本机 `python3` 执行 `w2r`，所以仍需 Python 3.10+。
+说明：npm 包模板已在仓库中，但当前版本尚未发布到 npm registry。
 
 ## 快速开始
 
@@ -101,7 +101,7 @@ source .venv/bin/activate
 python -m pip install -U pip
 python -m pip install -e .[dev]
 pytest
-python -m py_compile w2r.py src/w2r/cli.py
+python -m py_compile src/w2r/cli.py
 ```
 
 ## 版本管理

@@ -31,11 +31,15 @@ jobs:
         run: pytest
 
       - name: Compile check
-        run: python -m py_compile src/w2r/cli.py w2r.py
+        run: python -m py_compile src/w2r/cli.py
 
       - name: CLI smoke
         run: |
           w2r --help
+          w2r accounts --help
+          w2r config --help
           w2r service --help
           w2r subs --help
           w2r articles --help
+          w2r feed --help
+          w2r proxy --help
