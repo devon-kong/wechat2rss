@@ -1,0 +1,28 @@
+{
+  "name": "w2r-cli",
+  "version": "0.1.0",
+  "description": "CLI for managing a self-hosted Wechat2RSS service",
+  "license": "MIT",
+  "bin": {
+    "w2r": "bin/w2r.js"
+  },
+  "files": [
+    "bin/",
+    "src/w2r/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_GITHUB_USERNAME/wechat2rss-cli.git"
+  },
+  "keywords": [
+    "wechat",
+    "rss",
+    "cli",
+    "wechat2rss"
+  ]
+}
