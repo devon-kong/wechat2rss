@@ -46,3 +46,24 @@ jobs:
           w2r articles --help
           w2r feed --help
           w2r proxy --help
+
+      - name: Release gate smoke
+        run: |
+          if git ls-files | grep -E '(^|/)(config\.json|\.env|.*\.log)$'; then
+            echo "Refusing release: config.json, .env, or *.log is tracked"
+            exit 1
+          fi
+
+          W2R_BASE_URL="https://rss.example.com" \
+          W2R_TOKEN="test-token" \
+          w2r --config /tmp/not-exist-w2r.json service --help
+
+          W2R_BASE_URL="https://rss.example.com" \
+          W2R_TOKEN="test-token" \
+          w2r --config /tmp/not-exist-w2r.json feed all --format xml --print-url > /tmp/w2r-feed-url.txt
+
+          grep -F 'k=***REDACTED***' /tmp/w2r-feed-url.txt
+          if grep -F 'k=test-token' /tmp/w2r-feed-url.txt; then
+            echo "Refusing release: feed URL exposed token"
+            exit 1
+          fi
