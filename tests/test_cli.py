@@ -29,6 +29,19 @@ from w2r.cli import (
 )
 
 
+@pytest.fixture(autouse=True)
+def isolate_w2r_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    for key in (
+        "W2R_BASE_URL",
+        "W2R_TOKEN",
+        "W2R_PROXY_SECRET",
+        "W2R_TIMEOUT",
+        "W2R_HMAC_ALGO",
+        "W2R_ALLOW_SHOW_SECRETS",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+
 def test_normalize_base_url_ok() -> None:
     assert normalize_base_url("https://rss.example.com/") == "https://rss.example.com"
 
