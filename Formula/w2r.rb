@@ -4,7 +4,7 @@ class W2r < Formula
   desc "CLI for managing a self-hosted Wechat2RSS service"
   homepage "https://github.com/devon-kong/wechat2rss"
   url "https://github.com/devon-kong/wechat2rss/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "REPLACE_WITH_RELEASE_TARBALL_SHA256"
+  sha256 "933e2299952c7e72a83d9b720c064ad5407afc4b0b8471de9f0e08cf4e3f5e55"
   license "MIT"
 
   depends_on "python@3.12"
